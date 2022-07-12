@@ -1,0 +1,35 @@
+# Container only for development and testing! purpose
+version: "3.8"
+services:
+  postgresql:
+    container_name: postgresql
+    build:
+      context: .
+      dockerfile: Dockerfile-postgresql
+    volumes:
+      - ${POSTGRES_DATA_DIR}:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_HOST_AUTH_METHOD=${POSTGRES_HOST_AUTH_METHOD}
+      - POSTGRES_INITDB_ARGS=${POSTGRES_INITDB_ARGS}
+      - POSTGRES_DATABASES=${POSTGRES_DATABASES}
+    ports:
+      - ${POSTGRES_PORT}
+  keycloak:
+    container_name: keycloak
+    depends_on:
+      - postgresql
+    build:
+      context: .
+      dockerfile: Dockerfile-keycloak
+    ports:
+      - "${KEYCLOAK_PORT}"
+    environment:
+      - DB_VENDOR=POSTGRES
+      - DB_ADDR=postgresql
+      - DB_SCHEMA=${KEYCLOAK_DB_SCHEMA}
+      - DB_DATABASE=${KEYCLOAK_DB_NAME}
+      - DB_USER=${KEYCLOAK_DB_USER}
+      - DB_PASSWORD=${KEYCLOAK_DB_PASSWORD}
+      - KEYCLOAK_LOGLEVEL=${KEYCLOAK_LOGLEVEL}
