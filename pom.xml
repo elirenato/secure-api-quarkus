@@ -28,6 +28,14 @@
     </dependencies>
   </dependencyManagement>
   <dependencies>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-kubernetes</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-container-image-jib</artifactId>
+    </dependency>
     <!-- A nice library that can be used to mock data for tests -->
     <!-- http://github.com/DiUS/java-faker -->
     <!-- https://mvnrepository.com/artifact/com.github.javafaker/javafaker -->
