@@ -34,7 +34,7 @@
     </dependency>
     <dependency>
       <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-container-image-jib</artifactId>
+      <artifactId>quarkus-container-image-docker</artifactId>
     </dependency>
     <!-- A nice library that can be used to mock data for tests -->
     <!-- http://github.com/DiUS/java-faker -->
