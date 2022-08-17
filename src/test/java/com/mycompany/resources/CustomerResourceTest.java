@@ -1,8 +1,12 @@
 package com.mycompany.resources;
 
 import com.github.javafaker.Faker;
+import com.mycompany.config.KeycloakResource;
+import com.mycompany.config.PostgresResource;
 import com.mycompany.entities.*;
 import com.mycompany.repositories.*;
+
+import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
 import org.junit.jupiter.api.Test;
@@ -14,6 +18,9 @@ import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
+
+@QuarkusTestResource(KeycloakResource.class)
+@QuarkusTestResource(PostgresResource.class)
 @QuarkusTest
 public class CustomerResourceTest {
 
