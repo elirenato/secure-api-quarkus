@@ -7,10 +7,13 @@ import java.util.Map;
 
 public class PostgresResource implements QuarkusTestResourceLifecycleManager {
 
-    PostgreSQLContainer postgres;
+    private PostgreSQLContainer postgres;
 
     @Override
     public Map<String, String> start() {
+        System.out.println("###################################");
+        System.out.println("# Postgres Test Container started #");
+        System.out.println("###################################");
         postgres = new PostgreSQLContainer("postgres:13.3")
                 .withDatabaseName("app_test")
                 .withUsername("app_test_user")

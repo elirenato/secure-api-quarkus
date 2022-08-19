@@ -1,6 +1,7 @@
 package com.mycompany.resources;
 
 import com.github.javafaker.Faker;
+import com.mycompany.config.DefaultTestProfile;
 import com.mycompany.entities.Country;
 import com.mycompany.entities.Customer;
 import com.mycompany.entities.StateProvince;
@@ -8,6 +9,7 @@ import com.mycompany.repositories.CountryRepository;
 import com.mycompany.repositories.CustomerRepository;
 import com.mycompany.repositories.StateProvinceRepository;
 import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.junit.TestProfile;
 import io.quarkus.test.security.TestSecurity;
 import org.junit.jupiter.api.Test;
 
@@ -18,7 +20,7 @@ import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
-
+@TestProfile(DefaultTestProfile.class)
 @QuarkusTest
 public class CustomerResourceTest {
 

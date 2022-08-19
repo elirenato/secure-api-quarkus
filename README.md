@@ -22,6 +22,13 @@ Run the image as a container:
 
 `./mvnw test`
 
+or 
+
+`./mvnw test -Dtest.containers.disabled`
+
+To disable the TestContainers, but you must have a Postgres service running and the `app_test` database created. 
+See the `src/test/resource/application.properties` to see the credentials used by the test profile.
+
 ## Running the application in dev mode
 
 You can run your application in dev mode that enables live coding using:
