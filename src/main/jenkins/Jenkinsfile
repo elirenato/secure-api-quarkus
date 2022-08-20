@@ -1,11 +1,38 @@
 pipeline {
+
+     environment {
+        POSTGRES_PORT = '127.0.0.1:5432:5432'
+        POSTGRES_USER = 'postgres'
+        POSTGRES_PASSWORD = 'password'
+        POSTGRES_HOST_AUTH_METHOD = 'password'
+        POSTGRES_INITDB_ARGS = '--auth-host=password'
+        POSTGRES_DATABASES = 'app_test,app_test_user,password'
+    }
+    options {
+      timeout(time: 10, unit: 'MINUTES')
+      disableConcurrentBuilds()
+    }
     agent {
         docker {
             image 'elirenato2000/java11_pg13'
-            args '-e POSTGRES_PORT="127.0.0.1:5432:5432" -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=password -e POSTGRES_HOST_AUTH_METHOD=password -e POSTGRES_INITDB_ARGS="--auth-host=password" -e POSTGRES_DATABASES="app_test,app_test_user,password" -v /root/.m2:/root/.m2'
+            args """
+                -u root:root
+                -p 127.0.0.1:5432:5432
+                -e POSTGRES_USER=postgres
+                -e POSTGRES_PASSWORD=password
+                -e POSTGRES_HOST_AUTH_METHOD=password
+                -e POSTGRES_INITDB_ARGS='--auth-host=password'
+                -e POSTGRES_DATABASES='app_test,app_test_user,password'
+            """
         }
     }
     stages {
+        stage('Start PostgreSQL') {
+            steps {
+                sh 'docker-entrypoint.sh postgres &'
+                sh 'until pg_isready --host=localhost; do sleep 1; done'
+            }
+        }
         stage('Test') {
             steps {
                 sh 'mvn test -Dtest.containers.disabled'
