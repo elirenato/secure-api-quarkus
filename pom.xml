@@ -45,7 +45,7 @@
       <version>1.0.2</version>
       <scope>test</scope>
     </dependency>
-    <!-- Utilities (@TestSecurity) to test Quarkus Security  -->
+    <!-- Utilities (Like @TestSecurity) to test Quarkus Security  -->
     <!-- https://mvnrepository.com/artifact/io.quarkus/quarkus-test-security -->
     <dependency>
       <groupId>io.quarkus</groupId>
@@ -94,6 +94,7 @@
       <artifactId>rest-assured</artifactId>
       <scope>test</scope>
     </dependency>
+    <!-- Postgresql test container to make easy run tests -->
     <!-- https://www.testcontainers.org/modules/databases/postgres/ -->
     <dependency>
       <groupId>org.testcontainers</groupId>
@@ -101,6 +102,8 @@
       <version>1.17.3</version>
       <scope>test</scope>
     </dependency>
+    <!-- Quarkus extension to run tests with coverage when using a CI like Jenkins  -->
+    <!-- https://quarkus.io/guides/tests-with-coverage -->
     <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-jacoco</artifactId>

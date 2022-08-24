@@ -3,7 +3,17 @@ pipeline {
       timeout(time: 10, unit: 'MINUTES')
       disableConcurrentBuilds()
     }
-    agent any
+    agent {
+        docker {
+            // This image was built with the /src/main/jenkins/docker/Dockerfile
+            image 'elirenato2000/jenkins_quarkus'
+            args """
+                -u root:root
+                -v /root/.m2:/root/.m2
+                -v /var/run/docker.sock:/var/run/docker.sock
+            """
+        }
+    }
     stages {
         stage('Test') {
             steps {
@@ -29,10 +39,13 @@ pipeline {
                 """
             }
         }
-//         stage('Deliver') {
-//             steps {
-//                 sh './jenkins/scripts/deliver.sh'
-//             }
-//         }
+        stage('Deploy') {
+            steps {
+                sshagent (credentials: ['kubernetes-server'])  {
+                    sh 'scp -o StrictHostKeyChecking=no -r -v -P ${KUBERNETES_SERVER_PORT} target/kubernetes/kubernetes.yml ${KUBERNETES_SERVER_USERNAME}@${KUBERNETES_SERVER_HOST}:/tmp/kubernetes.yml'
+                    sh 'ssh -o StrictHostKeyChecking=no -p ${KUBERNETES_SERVER_PORT} ${KUBERNETES_SERVER_USERNAME}@${KUBERNETES_SERVER_HOST} \"microk8s kubectl apply -f /tmp/kubernetes.yml\"'
+                }
+            }
+        }
     }
 }
