@@ -3,31 +3,11 @@ pipeline {
       timeout(time: 10, unit: 'MINUTES')
       disableConcurrentBuilds()
     }
-    agent {
-        docker {
-            image 'elirenato2000/java11_pg13'
-            args """
-                -u root:root
-                -p 127.0.0.1:5432:5432
-                -e POSTGRES_USER=postgres
-                -e POSTGRES_PASSWORD=password
-                -e POSTGRES_HOST_AUTH_METHOD=password
-                -e POSTGRES_INITDB_ARGS='--auth-host=password'
-                -e POSTGRES_DATABASES='app_test,app_test_user,password'
-                -v /root/.m2:/root/.m2
-            """
-        }
-    }
+    agent any
     stages {
-        stage('Start PostgreSQL') {
-            steps {
-                sh 'docker-entrypoint.sh postgres &'
-                sh 'until pg_isready --host=localhost; do sleep 1; done'
-            }
-        }
         stage('Test') {
             steps {
-                sh 'mvn verify -Dtest.containers.disabled'
+                sh 'mvn verify'
             }
             post {
                 always {
@@ -41,6 +21,7 @@ pipeline {
                 sh """
                     mvn -B \
                     -DskipTests package \
+                    -Dquarkus.container-image.build=true \
                     -Dquarkus.container-image.push=true \
                     -Dquarkus.container-image.registry=${DOCKER_REGISTRY_HOST} \
                     -Dquarkus.container-image.username=${DOCKER_REGISTRY_USERNAME} \
