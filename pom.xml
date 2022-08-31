@@ -28,6 +28,14 @@
     </dependencies>
   </dependencyManagement>
   <dependencies>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-kubernetes</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-container-image-jib</artifactId>
+    </dependency>
     <!-- A nice library that can be used to mock data for tests -->
     <!-- http://github.com/DiUS/java-faker -->
     <!-- https://mvnrepository.com/artifact/com.github.javafaker/javafaker -->
@@ -37,7 +45,7 @@
       <version>1.0.2</version>
       <scope>test</scope>
     </dependency>
-    <!-- Utilities (@TestSecurity) to test Quarkus Security  -->
+    <!-- Utilities (Like @TestSecurity) to test Quarkus Security  -->
     <!-- https://mvnrepository.com/artifact/io.quarkus/quarkus-test-security -->
     <dependency>
       <groupId>io.quarkus</groupId>
@@ -84,6 +92,21 @@
     <dependency>
       <groupId>io.rest-assured</groupId>
       <artifactId>rest-assured</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <!-- Postgresql test container to make easy run tests -->
+    <!-- https://www.testcontainers.org/modules/databases/postgres/ -->
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>postgresql</artifactId>
+      <version>1.17.3</version>
+      <scope>test</scope>
+    </dependency>
+    <!-- Quarkus extension to run tests with coverage when using a CI like Jenkins  -->
+    <!-- https://quarkus.io/guides/tests-with-coverage -->
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-jacoco</artifactId>
       <scope>test</scope>
     </dependency>
   </dependencies>
