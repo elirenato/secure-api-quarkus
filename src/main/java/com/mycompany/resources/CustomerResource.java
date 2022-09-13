@@ -3,6 +3,7 @@ package com.mycompany.resources;
 import com.fasterxml.jackson.annotation.JsonView;
 import com.mycompany.entities.Customer;
 import com.mycompany.services.CustomerService;
+import io.quarkus.security.Authenticated;
 
 import javax.annotation.security.RolesAllowed;
 import javax.validation.Valid;
@@ -38,21 +39,16 @@ public class CustomerResource {
         customerService.deleteCustomer(id);
     }
 
-    @JsonView(Customer.GetJsonView.class)
     @Path("/{id}")
     @GET
-    @RolesAllowed({"operators", "managers"})
+    @Authenticated
     public Customer getCustomer(@PathParam("id") Long id) {
         return customerService.getCustomer(id);
     }
 
-    /* As we use @Transaction at the service layer, at this point, the transaction is already closed, so, to avoid
-     * a "classic" LazyInitializationException, we can use JsonView to instruct Jackson to do not serialize
-     * the relationship stateProvince that is lazy load and it's not fetched for list purpose.
-     */
     @JsonView(Customer.ListJsonView.class)
     @GET
-    @RolesAllowed({"operators", "managers"})
+    @Authenticated
     public List<Customer> listAllCustomers() {
         return customerService.listAllCustomers();
     }

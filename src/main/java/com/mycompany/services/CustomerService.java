@@ -1,13 +1,17 @@
 package com.mycompany.services;
 
+import com.fasterxml.jackson.databind.util.BeanUtil;
 import com.mycompany.entities.Customer;
 import com.mycompany.repositories.CustomerRepository;
 import com.mycompany.repositories.StateProvinceRepository;
 import io.quarkus.panache.common.Sort;
+import org.apache.commons.beanutils.BeanUtils;
+import org.apache.commons.beanutils.BeanUtilsBean;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.transaction.Transactional;
 import javax.ws.rs.NotFoundException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
 @ApplicationScoped
@@ -20,21 +24,14 @@ public class CustomerService {
         this.stateProvinceRepository = stateProvinceRepository;
     }
 
-    private void copyInfo(Customer customerInput, Customer customer) {
-        customer.setFirstName(customerInput.getFirstName());
-        customer.setLastName(customerInput.getLastName());
-        customer.setAddress(customerInput.getAddress());
-        customer.setAddress2(customerInput.getAddress2());
-        customer.setPostalCode(customerInput.getPostalCode());
-        customer.setStateProvince(stateProvinceRepository.findByIdOptional(customerInput.getStateProvince().getId())
-                .orElseThrow(NotFoundException::new));
-        customer.setEmail(customerInput.getEmail());
-    }
-
     @Transactional
     public Customer persistCustomer(Customer customerInput) {
         Customer customer = new Customer();
-        copyInfo(customerInput, customer);
+        try {
+            BeanUtils.copyProperties(customer, customerInput);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
         customerRepository.persist(customer);
         return customer;
     }
@@ -43,7 +40,12 @@ public class CustomerService {
     public Customer updateCustomer(Long id, Customer customerInput) {
         Customer customer = customerRepository.findByIdOptional(id)
                 .orElseThrow(NotFoundException::new);
-        copyInfo(customerInput, customer);
+        customerInput.setId(id);
+        try {
+            BeanUtils.copyProperties(customer, customerInput);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
         return customerRepository.getEntityManager().merge(customer);
     }
 
@@ -56,11 +58,12 @@ public class CustomerService {
     }
 
     public Customer getCustomer(Long id) {
-        return customerRepository.findByIdOptional(id)
+        Customer customer = customerRepository.findByIdOptional(id)
                 .orElseThrow(NotFoundException::new);
+        return customer;
     }
 
     public List<Customer> listAllCustomers() {
-        return customerRepository.listAll(Sort.by("lastName", "firstName"));
+        return customerRepository.listAll(Sort.ascending("lastName", "firstName"));
     }
 }

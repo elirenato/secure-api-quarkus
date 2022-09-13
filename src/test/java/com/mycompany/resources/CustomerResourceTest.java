@@ -1,94 +1,49 @@
 package com.mycompany.resources;
 
-import com.github.javafaker.Faker;
+import com.mycompany.common.BuilderFactory;
 import com.mycompany.config.DefaultTestProfile;
 import com.mycompany.entities.Country;
 import com.mycompany.entities.Customer;
 import com.mycompany.entities.StateProvince;
-import com.mycompany.repositories.CountryRepository;
-import com.mycompany.repositories.CustomerRepository;
-import com.mycompany.repositories.StateProvinceRepository;
+import com.mycompany.services.CustomerService;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
+import io.quarkus.test.junit.mockito.InjectMock;
 import io.quarkus.test.security.TestSecurity;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
-import javax.transaction.Transactional;
+import javax.ws.rs.NotFoundException;
+import java.util.Arrays;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
 
 @TestProfile(DefaultTestProfile.class)
 @QuarkusTest
 public class CustomerResourceTest {
 
-    private Faker faker = Faker.instance();
+    @InjectMock
+    private CustomerService customerService;
 
-    private CustomerRepository customerRepository;
-    private StateProvinceRepository stateProvinceRepository;
-    private CountryRepository countryRepository;
-
-    public CustomerResourceTest(
-            CustomerRepository customerRepository,
-            StateProvinceRepository stateProvinceRepository,
-            CountryRepository countryRepository
-    ) {
-        this.customerRepository = customerRepository;
-        this.stateProvinceRepository = stateProvinceRepository;
-        this.countryRepository = countryRepository;
-    }
-
-    @Transactional
-    protected StateProvince mockStateProvince() {
-        Country country = new Country();
-        country.setId(1);
-        country.setAbbreviation(faker.country().countryCode3());
-        country.setName(faker.country().name());
-        countryRepository.persist(country);
-
-        StateProvince stateProvince = new StateProvince();
-        stateProvince.setId(1);
-        stateProvince.setName(faker.address().state());
-        stateProvince.setAbbreviation(faker.address().stateAbbr());
-        stateProvince.setCountry(country);
-        stateProvinceRepository.persist(stateProvince);
-        return stateProvince;
-    }
-
-    private Customer createCustomerInput() {
-        Customer customerInput = new Customer();
-        customerInput.setFirstName(faker.name().firstName());
-        customerInput.setLastName(faker.name().lastName());
-        customerInput.setEmail(faker.internet().emailAddress());
-        customerInput.setAddress(faker.address().fullAddress());
-        customerInput.setAddress2(faker.address().secondaryAddress());
-        customerInput.setPostalCode(faker.address().zipCode());
-        customerInput.setStateProvince(
-                stateProvinceRepository.findByIdOptional(1)
-                        .orElseGet(this::mockStateProvince)
-        );
-        return customerInput;
-    }
-
-    private void assertEntityWasUpdated(Long entityId, Customer customerInput) {
-        Customer customerEntity = customerRepository.findById(entityId);
-        assertEquals(customerEntity.getFirstName(), customerInput.getFirstName());
-        assertEquals(customerEntity.getLastName(), customerInput.getLastName());
-        assertEquals(customerEntity.getEmail(), customerInput.getEmail());
-        assertEquals(customerEntity.getAddress(), customerInput.getAddress());
-        assertEquals(customerEntity.getAddress2(), customerInput.getAddress2());
-        assertEquals(customerEntity.getPostalCode(), customerInput.getPostalCode());
-        assertEquals(customerEntity.getStateProvince().getId(), customerInput.getStateProvince().getId());
+    private StateProvince buildStateProvince() {
+        Country country = BuilderFactory
+                .country()
+                .build();
+        return BuilderFactory
+                .stateProvince()
+                .with(StateProvince::setCountry, country)
+                .build();
     }
 
     @Test
     @TestSecurity(user = "user-manager", roles = "managers")
     public void testPersistCustomer() {
-        // Mock some input data to send in the request
-        Customer customerInput = createCustomerInput();
-        // Make the post request and assert the response body comes with the entity
+        Customer customerInput = BuilderFactory
+                .customer()
+                .with(Customer::setStateProvince, buildStateProvince())
+                .build();
+
         given()
                 .when()
                 .body(customerInput)
@@ -96,13 +51,13 @@ public class CustomerResourceTest {
                 .post("/api/customers")
                 .then()
                 .statusCode(204);
-        customerRepository.find("email", customerInput.getEmail()).firstResult();
+
+        Mockito.verify(customerService, Mockito.times(1)).persistCustomer(Mockito.refEq(customerInput));
     }
 
     @Test
     @TestSecurity(user = "user-manager", roles = "managers")
     public void testPersistCustomerWhenInputIsEmpty() {
-        // mock an empty input for the request
         Customer customerInput = new Customer();
         given()
                 .when()
@@ -143,8 +98,11 @@ public class CustomerResourceTest {
     @Test
     @TestSecurity(user = "user-manager", roles = "managers")
     public void testPersistCustomerWhenEmailIsInvalid() {
-        Customer customerInput = createCustomerInput();
-        customerInput.setEmail("jon.email.com");
+        Customer customerInput = BuilderFactory
+                .customer()
+                .with(Customer::setStateProvince, buildStateProvince())
+                .with(Customer::setEmail, "jon.email.com")
+                .build();
         given()
                 .when()
                 .body(customerInput)
@@ -161,7 +119,10 @@ public class CustomerResourceTest {
 
     @Test
     public void testPersistCustomerWithoutAuthenticationThenFail() {
-        Customer customerInput = createCustomerInput();
+        Customer customerInput = BuilderFactory
+                .customer()
+                .with(Customer::setStateProvince, buildStateProvince())
+                .build();
         given()
                 .when()
                 .body(customerInput)
@@ -174,7 +135,10 @@ public class CustomerResourceTest {
     @Test
     @TestSecurity(user = "user-operator", roles = "operators")
     public void testPersistCustomerWithoutAuthorizationThenFail() {
-        Customer customerInput = createCustomerInput();
+        Customer customerInput = BuilderFactory
+                .customer()
+                .with(Customer::setStateProvince, buildStateProvince())
+                .build();
         given()
                 .when()
                 .body(customerInput)
@@ -184,40 +148,37 @@ public class CustomerResourceTest {
                 .statusCode(403);
     }
 
-    @Transactional
-    protected Customer mockCustomerToGetOrUpdate() {
-        Customer customer = createCustomerInput();
-        customerRepository.persist(customer);
-        return customer;
-    }
-
     @Test
     @TestSecurity(user = "user-manager", roles = "managers")
     public void testUpdateCustomer() {
-        final Customer customerEntity = mockCustomerToGetOrUpdate();
-        // mock some data to update the customer information
-        Customer customerInput = createCustomerInput();
+        Customer customerInput = BuilderFactory
+                .customer()
+                .with(Customer::setId, BuilderFactory.getFaker().number().randomNumber())
+                .with(Customer::setStateProvince, buildStateProvince())
+                .build();
+
         given()
             .when()
             .body(customerInput)
             .contentType("application/json")
-            .put("/api/customers/" + customerEntity.getId())
+            .put("/api/customers/" + customerInput.getId())
             .then()
             .statusCode(204);
-        assertEntityWasUpdated(customerEntity.getId(), customerInput);
+
+        Mockito.verify(customerService, Mockito.times(1)).updateCustomer(
+                Mockito.eq(customerInput.getId()), Mockito.refEq(customerInput, "id")
+        );
     }
 
     @Test
     @TestSecurity(user = "user-manager", roles = "managers")
     public void testUpdateCustomerWhenInputIsEmpty() {
-        final Customer customerEntity = mockCustomerToGetOrUpdate();
-        // mock an empty input for the request
         Customer customerInput = new Customer();
         given()
                 .when()
                 .body(customerInput)
                 .contentType("application/json")
-                .put("/api/customers/" + customerEntity.getId())
+                .put("/api/customers/1")
                 .then()
                 .statusCode(400)
                 .body("violations", hasSize(6))
@@ -252,11 +213,17 @@ public class CustomerResourceTest {
     @Test
     @TestSecurity(user = "user-manager", roles = "managers")
     public void testUpdateCustomerWhenNotFoundThenFail() {
-        Customer author = createCustomerInput();
+        Customer customerInput = BuilderFactory
+                .customer()
+                .with(Customer::setId, BuilderFactory.getFaker().number().randomNumber())
+                .with(Customer::setStateProvince, buildStateProvince())
+                .build();
+        Mockito.when(customerService.updateCustomer(Mockito.any(), Mockito.any()))
+                .thenThrow(new NotFoundException());
         given()
                 .when()
                 .contentType("application/json")
-                .body(author)
+                .body(customerInput)
                 .put("/api/customers/0")
                 .then()
                 .statusCode(404);
@@ -264,7 +231,11 @@ public class CustomerResourceTest {
 
     @Test
     public void testUpdateCustomerWithoutAuthenticationThenFail() {
-        Customer customerInput = createCustomerInput();
+        Customer customerInput = BuilderFactory
+                .customer()
+                .with(Customer::setId, BuilderFactory.getFaker().number().randomNumber())
+                .with(Customer::setStateProvince, buildStateProvince())
+                .build();
         given()
                 .when()
                 .body(customerInput)
@@ -277,7 +248,11 @@ public class CustomerResourceTest {
     @Test
     @TestSecurity(user = "user-manager", roles = "operators")
     public void testUpdateCustomerWithoutAuthorizationThenFail() {
-        Customer customerInput = createCustomerInput();
+        Customer customerInput = BuilderFactory
+                .customer()
+                .with(Customer::setId, BuilderFactory.getFaker().number().randomNumber())
+                .with(Customer::setStateProvince, buildStateProvince())
+                .build();
         given()
                 .when()
                 .body(customerInput)
@@ -290,34 +265,40 @@ public class CustomerResourceTest {
     @Test
     @TestSecurity(user = "user-manager", roles = "managers")
     public void testDeleteCustomer() {
-        Customer author = mockCustomerToGetOrUpdate();
+        Long id = BuilderFactory.getFaker().number().randomNumber();
+
         given()
-            .when()
-            .contentType("application/json")
-            .delete("/api/customers/" + author.getId())
-            .then()
-            .statusCode(204);
-        Customer authorDeleted = customerRepository.findById(author.getId());
-        assertNull(authorDeleted);
+                .when()
+                .contentType("application/json")
+                .delete("/api/customers/" + id)
+                .then()
+                .statusCode(204);
+
+        Mockito.verify(customerService, Mockito.times(1)).deleteCustomer(Mockito.eq(id));
     }
 
     @Test
     @TestSecurity(user = "user-manager", roles = "managers")
     public void testDeleteCustomerWhenNotFoundThenFail() {
+        Long id = BuilderFactory.getFaker().number().randomNumber();
+        Mockito.when(customerService.deleteCustomer(Mockito.eq(id)))
+                .thenThrow(new NotFoundException());
+
         given()
                 .when()
                 .contentType("application/json")
-                .delete("/api/customers/0")
+                .delete("/api/customers/" + id)
                 .then()
                 .statusCode(404);
     }
 
     @Test
     public void testDeleteCustomerWithoutAuthenticationThenFail() {
+        Long id = BuilderFactory.getFaker().number().randomNumber();
         given()
                 .when()
                 .contentType("application/json")
-                .delete("/api/customers/1")
+                .delete("/api/customers/" + id)
                 .then()
                 .statusCode(401);
     }
@@ -325,50 +306,49 @@ public class CustomerResourceTest {
     @Test
     @TestSecurity(user = "user-operator", roles = "operators")
     public void testDeleteCustomerWithoutAuthorizationThenFail() {
+        Long id = BuilderFactory.getFaker().number().randomNumber();
         given()
                 .when()
                 .contentType("application/json")
-                .delete("/api/customers/1")
+                .delete("/api/customers/" + id)
                 .then()
                 .statusCode(403);
     }
 
-    private void getCustomer() {
-        Customer customer = mockCustomerToGetOrUpdate();
+    @Test
+    @TestSecurity(user = "user")
+    public void testGetCustomerWhenAuthenticated() {
+        Customer customer = BuilderFactory
+                .customer()
+                .with(Customer::setId, BuilderFactory.getFaker().number().randomNumber())
+                .with(Customer::setStateProvince, buildStateProvince())
+                .build();
+        Mockito.when(customerService.getCustomer(Mockito.eq(customer.getId()))).thenReturn(customer);
+
         given()
-                .when()
-                .contentType("application/json")
-                .get("/api/customers/" + customer.getId())
-                .then()
-                .statusCode(200)
-                .body("id", is(customer.getId().intValue()))
-                .body("firstName", is(customer.getFirstName()))
-                .body("lastName", is(customer.getLastName()))
-                .body("email", is(customer.getEmail()))
-                .body("address", is(customer.getAddress()))
-                .body("address2", is(customer.getAddress2()))
-                .body("postalCode", is(customer.getPostalCode()))
-                .body("stateProvince.id", is(customer.getStateProvince().getId().intValue()));
-    }
-
-    @Test
-    @TestSecurity(user = "user-operator", roles = "operators")
-    public void testGetCustomerWhenOperator() {
-        getCustomer();
-    }
-
-    @Test
-    @TestSecurity(user = "user-manager", roles = "managers")
-    public void testGetCustomerWhenManager() {
-        getCustomer();
+            .when()
+            .contentType("application/json")
+            .get("/api/customers/" + customer.getId())
+            .then()
+            .statusCode(200)
+            .body("id", is(customer.getId().intValue()))
+            .body("firstName", is(customer.getFirstName()))
+            .body("lastName", is(customer.getLastName()))
+            .body("email", is(customer.getEmail()))
+            .body("address", is(customer.getAddress()))
+            .body("address2", is(customer.getAddress2()))
+            .body("postalCode", is(customer.getPostalCode()))
+            .body("stateProvince.id", is(customer.getStateProvince().getId().intValue()));
     }
 
     @Test
     public void testGetCustomerWithoutAuthenticationThenFail() {
+        Long id = BuilderFactory.getFaker().number().randomNumber();
+
         given()
                 .when()
                 .contentType("application/json")
-                .get("/api/customers/1")
+                .get("/api/customers/" + id)
                 .then()
                 .statusCode(401);
     }
@@ -376,80 +356,39 @@ public class CustomerResourceTest {
     @Test
     @TestSecurity(user = "user-operator", roles = "operators")
     public void testGetCustomerWhenNotFoundThenFail() {
+        Long id = BuilderFactory.getFaker().number().randomNumber();
+        Mockito.when(customerService.getCustomer(Mockito.eq(id)))
+                .thenThrow(new NotFoundException());
+
         given()
                 .when()
                 .contentType("application/json")
-                .get("/api/customers/0")
+                .get("/api/customers/" + id)
                 .then()
                 .statusCode(404);
     }
 
-    @Transactional
-    protected Customer[] mockCustomersToList() {
-        customerRepository.deleteAll();
+    @Test
+    @TestSecurity(user = "user-operator")
+    public void testListAllCustomersWhenAuthenticated() {
+        StateProvince stateProvince = buildStateProvince();
+        Customer customer = BuilderFactory
+                .customer()
+                .with(Customer::setId, BuilderFactory.getFaker().number().randomNumber())
+                .with(Customer::setStateProvince, stateProvince)
+                .build();
+        Mockito.when(customerService.listAllCustomers()).thenReturn(Arrays.asList(customer));
 
-        Customer customer1 = createCustomerInput();
-        customer1.setLastName("Stark");
-        customer1.setFirstName("Ned");
-        customerRepository.persist(customer1);
-
-        Customer customer2 = createCustomerInput();
-        customer2.setLastName("Stark");
-        customer2.setFirstName("Catelyn");
-        customerRepository.persist(customer2);
-
-        Customer customer3 = createCustomerInput();
-        customer3.setLastName("Bolton");
-        customer3.setFirstName("Roose");
-        customerRepository.persist(customer3);
-
-        Customer customer4 = createCustomerInput();
-        customer4.setLastName("Bolton");
-        customer4.setFirstName("Ramsey");
-        customerRepository.persist(customer4);
-
-        return new Customer[]{customer1, customer2, customer3, customer4};
-    }
-
-    private void listAllCustomers() {
-        // Persisted order
-        // [0]: Stark|Ned
-        // [1]: Stark|Catelyn
-        // [2]: Bolton|Roose
-        // [3]: Bolton|Ramsey
-        Customer[] authors = mockCustomersToList();
-
-        // list without filter, neither sort. The default sort will be applied (lastName asc, firstName asc)
-        // Expected order
-        // [3]: Bolton|Ramsey
-        // [2]: Bolton|Roose
-        // [1]: Stark|Catelyn
-        // [0]: Stark|Ned
         given()
-                .when()
-                .contentType("application/json")
-                .get("/api/customers")
-                .then()
-                .statusCode(200)
-                .body("$", hasSize(4))
-                .body("[0].lastName", is(authors[3].getLastName()))
-                .body("[0].firstName", is(authors[3].getFirstName()))
-                .body("[1].lastName", is(authors[2].getLastName()))
-                .body("[1].firstName", is(authors[2].getFirstName()))
-                .body("[2].lastName", is(authors[1].getLastName()))
-                .body("[2].firstName", is(authors[1].getFirstName()));
-    }
-
-    @Test
-    @TestSecurity(user = "user-operator", roles = "operators")
-    public void testListAllCustomersWhenOperator() {
-        listAllCustomers();
-    }
-
-    @Test
-    @TestSecurity(user = "user-operator", roles = "managers")
-    public void testListAllCustomersWhenManager() {
-        listAllCustomers();
+            .when()
+            .contentType("application/json")
+            .get("/api/customers")
+            .then()
+            .statusCode(200)
+            .body("$", hasSize(1))
+            .body("[0].id", is(customer.getId().intValue()))
+            .body("[0].lastName", is(customer.getLastName()))
+            .body("[0].firstName", is(customer.getFirstName()));
     }
 
     @Test
