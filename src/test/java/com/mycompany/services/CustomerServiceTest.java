@@ -105,14 +105,12 @@ public class CustomerServiceTest {
         Assert.assertEquals(expectedCustomer.toString(), actualCustomer.toString());
     }
 
-
     @Test
     public void testGetCustomerWhenNotFoundThenFail() {
         Assert.assertThrows(NotFoundException.class, () ->
                 customerService.getCustomer(BuilderFactory.getFaker().number().randomNumber())
         );
     }
-
 
     @Test
     public void testListCustomer() {
@@ -133,5 +131,25 @@ public class CustomerServiceTest {
         List<Customer> actualCustomers = customerService.listAllCustomers();
 
         Assert.assertEquals(expectedCustomers, actualCustomers);
+    }
+
+    @Test
+    public void testDeleteCustomer() {
+        Customer expectedCustomer = BuilderFactory
+                .customer()
+                .with(Customer::setStateProvince, buildStateProvince())
+                .build(customerRepository::persist);
+
+        Customer actualCustomer = customerService.deleteCustomer(expectedCustomer.getId());
+
+        Assert.assertEquals(expectedCustomer.toString(), actualCustomer.toString());
+    }
+
+
+    @Test
+    public void testDeleteCustomerWhenNotFoundThenFail() {
+        Assert.assertThrows(NotFoundException.class, () ->
+                customerService.deleteCustomer(BuilderFactory.getFaker().number().randomNumber())
+        );
     }
 }

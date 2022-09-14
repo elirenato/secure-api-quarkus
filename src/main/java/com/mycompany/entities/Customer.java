@@ -44,7 +44,6 @@ public class Customer {
     @Column(name = "address", nullable = false)
     private String address;
 
-    @Size(min = 1, max = 255)
     @Column(name = "address2")
     private String address2;
 

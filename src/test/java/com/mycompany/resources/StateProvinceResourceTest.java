@@ -40,7 +40,7 @@ public class StateProvinceResourceTest {
         given()
                 .when()
                 .contentType("application/json")
-                .get("/api/states-provinces/" + expectedStateProvince.getId())
+                .get("/api/state-provinces/" + expectedStateProvince.getId())
                 .then()
                 .statusCode(200)
                 .body("id", is(expectedStateProvince.getId().intValue()))
@@ -54,7 +54,7 @@ public class StateProvinceResourceTest {
         given()
                 .when()
                 .contentType("application/json")
-                .get("/api/states-provinces/1")
+                .get("/api/state-provinces/1")
                 .then()
                 .statusCode(401);
     }
@@ -66,7 +66,7 @@ public class StateProvinceResourceTest {
         given()
                 .when()
                 .contentType("application/json")
-                .get("/api/states-provinces/0")
+                .get("/api/state-provinces/0")
                 .then()
                 .statusCode(404);
     }
@@ -86,7 +86,7 @@ public class StateProvinceResourceTest {
         given()
                 .when()
                 .contentType("application/json")
-                .get("/api/states-provinces?country=" + country.getId())
+                .get("/api/state-provinces?country=" + country.getId())
                 .then()
                 .statusCode(200)
                 .body("$", hasSize(1))
@@ -100,7 +100,7 @@ public class StateProvinceResourceTest {
         given()
                 .when()
                 .contentType("application/json")
-                .get("/api/states-provinces")
+                .get("/api/state-provinces")
                 .then()
                 .statusCode(400);
     }
@@ -110,7 +110,7 @@ public class StateProvinceResourceTest {
         given()
                 .when()
                 .contentType("application/json")
-                .get("/api/states-provinces")
+                .get("/api/state-provinces")
                 .then()
                 .statusCode(401);
     }
