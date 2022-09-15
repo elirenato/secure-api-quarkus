@@ -1,16 +1,24 @@
 package com.mycompany.entities;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+
 import javax.persistence.*;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@Data
 @Entity
 @Table(name="customers")
 public class Customer {
 
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    @EqualsAndHashCode.Include
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -36,7 +44,6 @@ public class Customer {
     @Column(name = "address", nullable = false)
     private String address;
 
-    @Size(min = 1, max = 255)
     @Column(name = "address2")
     private String address2;
 
@@ -50,70 +57,6 @@ public class Customer {
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "state_province_id")
     private StateProvince stateProvince;
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getFirstName() {
-        return firstName;
-    }
-
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
-    }
-
-    public String getLastName() {
-        return lastName;
-    }
-
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getAddress() {
-        return address;
-    }
-
-    public void setAddress(String address) {
-        this.address = address;
-    }
-
-    public String getAddress2() {
-        return address2;
-    }
-
-    public void setAddress2(String address2) {
-        this.address2 = address2;
-    }
-
-    public String getPostalCode() {
-        return postalCode;
-    }
-
-    public void setPostalCode(String postalCode) {
-        this.postalCode = postalCode;
-    }
-
-    public StateProvince getStateProvince() {
-        return stateProvince;
-    }
-
-    public void setStateProvince(StateProvince stateProvince) {
-        this.stateProvince = stateProvince;
-    }
 
     public static class ListJsonView {
         private ListJsonView() {}
