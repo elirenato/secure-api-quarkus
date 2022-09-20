@@ -29,9 +29,7 @@ pipeline {
         stage('Build') {
             steps {
                 sh """
-                    mvn -B \
-                    -DskipTests package \
-                    -Dquarkus.container-image.build=true \
+                    mvn -B -DskipTests package -Dquarkus.container-image.build=true \
                     -Dquarkus.container-image.push=true \
                     -Dquarkus.container-image.registry=${DOCKER_REGISTRY_HOST} \
                     -Dquarkus.container-image.username=${DOCKER_REGISTRY_USERNAME} \
@@ -42,8 +40,8 @@ pipeline {
         stage('Deploy') {
             steps {
                 sshagent (credentials: ['kubernetes-server'])  {
-                    sh 'scp -o StrictHostKeyChecking=no -r -v -P ${KUBERNETES_SERVER_PORT} target/kubernetes/kubernetes.yml ${KUBERNETES_SERVER_USERNAME}@${KUBERNETES_SERVER_HOST}:/tmp/kubernetes.yml'
-                    sh 'ssh -o StrictHostKeyChecking=no -p ${KUBERNETES_SERVER_PORT} ${KUBERNETES_SERVER_USERNAME}@${KUBERNETES_SERVER_HOST} \"microk8s kubectl apply -f /tmp/kubernetes.yml\"'
+                    sh 'scp -o StrictHostKeyChecking=no -r -v -P ${KUBERNETES_SERVER_PORT} target/kubernetes/kubernetes.yml ${KUBERNETES_SERVER_USERNAME}@${KUBERNETES_SERVER_HOST}:/tmp/kubernetes-quarkus.yml'
+                    sh 'ssh -o StrictHostKeyChecking=no -p ${KUBERNETES_SERVER_PORT} ${KUBERNETES_SERVER_USERNAME}@${KUBERNETES_SERVER_HOST} \"microk8s kubectl apply -f /tmp/kubernetes-quarkus.yml\"'
                 }
             }
         }

@@ -1,8 +1,6 @@
 package com.mycompany.resources;
 
-import com.fasterxml.jackson.annotation.JsonView;
 import com.mycompany.entities.Country;
-import com.mycompany.entities.Customer;
 import com.mycompany.services.CountryService;
 import io.quarkus.security.Authenticated;
 
