@@ -1,12 +1,10 @@
 package com.mycompany.resources;
 
 import com.mycompany.common.BuilderFactory;
-import com.mycompany.config.DefaultTestProfile;
 import com.mycompany.entities.Country;
 import com.mycompany.entities.StateProvince;
 import com.mycompany.services.StateProvinceService;
 import io.quarkus.test.junit.QuarkusTest;
-import io.quarkus.test.junit.TestProfile;
 import io.quarkus.test.junit.mockito.InjectMock;
 import io.quarkus.test.security.TestSecurity;
 import org.junit.jupiter.api.Test;
@@ -19,7 +17,6 @@ import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 
-@TestProfile(DefaultTestProfile.class)
 @QuarkusTest
 public class StateProvinceResourceTest {
 

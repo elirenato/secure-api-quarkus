@@ -1,7 +1,7 @@
 package com.mycompany.services;
 
 import com.mycompany.common.BuilderFactory;
-import com.mycompany.config.DefaultTestProfile;
+import com.mycompany.config.DatabaseTestProfile;
 import com.mycompany.entities.Country;
 import com.mycompany.entities.Customer;
 import com.mycompany.entities.StateProvince;
@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-@TestProfile(DefaultTestProfile.class)
+@TestProfile(DatabaseTestProfile.class)
 @QuarkusTest
 @TestTransaction
 public class CustomerServiceTest {
