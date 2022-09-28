@@ -6,7 +6,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class DefaultTestProfile implements QuarkusTestProfile {
+public class DatabaseTestProfile implements QuarkusTestProfile {
     @Override
     public List<TestResourceEntry> testResources() {
         boolean enableTestContainers = System.getProperty("test.containers.disabled") == null;

@@ -1,15 +1,14 @@
 package com.mycompany.resources;
 
 import com.mycompany.common.BuilderFactory;
-import com.mycompany.config.DefaultTestProfile;
 import com.mycompany.entities.Country;
 import com.mycompany.entities.Customer;
 import com.mycompany.entities.StateProvince;
 import com.mycompany.services.CustomerService;
 import io.quarkus.test.junit.QuarkusTest;
-import io.quarkus.test.junit.TestProfile;
 import io.quarkus.test.junit.mockito.InjectMock;
 import io.quarkus.test.security.TestSecurity;
+import org.hibernate.exception.ConstraintViolationException;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
@@ -19,7 +18,6 @@ import java.util.Arrays;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
 
-@TestProfile(DefaultTestProfile.class)
 @QuarkusTest
 public class CustomerResourceTest {
 
@@ -57,8 +55,15 @@ public class CustomerResourceTest {
 
     @Test
     @TestSecurity(user = "user-manager", roles = "managers")
-    public void testPersistCustomerWhenInputIsEmpty() {
-        Customer customerInput = new Customer();
+    public void testPersistCustomerWhenEmailAlreadyExists() {
+        Customer customerInput = BuilderFactory
+                .customer()
+                .with(Customer::setStateProvince, buildStateProvince())
+                .build();
+
+        ConstraintViolationException hibernateConstraintException = new ConstraintViolationException(null, null, "customers_email_key");
+        Mockito.when(customerService.persistCustomer(Mockito.any()))
+                .thenThrow(hibernateConstraintException);
         given()
                 .when()
                 .body(customerInput)
@@ -66,33 +71,75 @@ public class CustomerResourceTest {
                 .post("/api/customers")
                 .then()
                 .statusCode(400)
-                .body("violations", hasSize(6))
-                .body("violations", hasItems(
-                        allOf(
-                                hasEntry("field", "persistCustomer.customerInput.firstName"),
-                                hasEntry("message", "must not be blank")
-                        ),
-                        allOf(
-                                hasEntry("field", "persistCustomer.customerInput.lastName"),
-                                hasEntry("message", "must not be blank")
-                        ),
-                        allOf(
-                                hasEntry("field", "persistCustomer.customerInput.email"),
-                                hasEntry("message", "must not be blank")
-                        ),
-                        allOf(
-                                hasEntry("field", "persistCustomer.customerInput.address"),
-                                hasEntry("message", "must not be blank")
-                        ),
-                        allOf(
-                                hasEntry("field", "persistCustomer.customerInput.postalCode"),
-                                hasEntry("message", "must not be blank")
-                        ),
-                        allOf(
-                                hasEntry("field", "persistCustomer.customerInput.stateProvince"),
-                                hasEntry("message", "must not be null")
-                        )
-                ));
+                .body("errors", hasSize(1))
+                .body("errors", hasItems(allOf(
+                        hasEntry("message", "There is already a customer with this email")
+                )));
+    }
+
+    @Test
+    @TestSecurity(user = "user-manager", roles = "managers")
+    public void testPersistCustomerWhenEmailAlreadyExistsPortuguese() {
+        Customer customerInput = BuilderFactory
+                .customer()
+                .with(Customer::setStateProvince, buildStateProvince())
+                .build();
+
+        ConstraintViolationException hibernateConstraintException = new ConstraintViolationException(null, null, "customers_email_key");
+        Mockito.when(customerService.persistCustomer(Mockito.any()))
+                .thenThrow(hibernateConstraintException);
+        given()
+                .when()
+                .header("Accept-Language", "pt-BR")
+                .body(customerInput)
+                .contentType("application/json")
+                .post("/api/customers")
+                .then()
+                .statusCode(400)
+                .body("errors", hasSize(1))
+                .body("errors", hasItems(allOf(
+                        hasEntry("message", "Já existe um cliente com este email.")
+                )));
+    }
+
+    @Test
+    @TestSecurity(user = "user-manager", roles = "managers")
+    public void testPersistCustomerWhenInputIsEmpty() {
+        Customer customerInput = new Customer();
+        given()
+            .when()
+            .body(customerInput)
+            .contentType("application/json")
+            .post("/api/customers")
+            .then()
+            .statusCode(400)
+            .body("errors", hasSize(6))
+            .body("errors", hasItems(
+                    allOf(
+                            hasEntry("path", "customer.firstName"),
+                            hasEntry("message", "must not be blank")
+                    ),
+                    allOf(
+                            hasEntry("path", "customer.lastName"),
+                            hasEntry("message", "must not be blank")
+                    ),
+                    allOf(
+                            hasEntry("path", "customer.email"),
+                            hasEntry("message", "must not be blank")
+                    ),
+                    allOf(
+                            hasEntry("path", "customer.address"),
+                            hasEntry("message", "must not be blank")
+                    ),
+                    allOf(
+                            hasEntry("path", "customer.postalCode"),
+                            hasEntry("message", "must not be blank")
+                    ),
+                    allOf(
+                            hasEntry("path", "customer.stateProvince"),
+                            hasEntry("message", "must not be null")
+                    )
+            ));
     }
 
     @Test
@@ -110,10 +157,10 @@ public class CustomerResourceTest {
                 .post("/api/customers")
                 .then()
                 .statusCode(400)
-                .body("violations", hasSize(1))
-                .body("violations", hasItems(allOf(
+                .body("errors", hasSize(1))
+                .body("errors", hasItems(allOf(
                         hasEntry("message", "must be a well-formed email address"),
-                        hasEntry("field", "persistCustomer.customerInput.email")
+                        hasEntry("path", "customer.email")
                 )));
     }
 
@@ -181,30 +228,30 @@ public class CustomerResourceTest {
                 .put("/api/customers/1")
                 .then()
                 .statusCode(400)
-                .body("violations", hasSize(6))
-                .body("violations", hasItems(
+                .body("errors", hasSize(6))
+                .body("errors", hasItems(
                         allOf(
-                                hasEntry("field", "updateCustomer.customerInput.firstName"),
+                                hasEntry("path", "customer.firstName"),
                                 hasEntry("message", "must not be blank")
                         ),
                         allOf(
-                                hasEntry("field", "updateCustomer.customerInput.lastName"),
+                                hasEntry("path", "customer.lastName"),
                                 hasEntry("message", "must not be blank")
                         ),
                         allOf(
-                                hasEntry("field", "updateCustomer.customerInput.email"),
+                                hasEntry("path", "customer.email"),
                                 hasEntry("message", "must not be blank")
                         ),
                         allOf(
-                                hasEntry("field", "updateCustomer.customerInput.address"),
+                                hasEntry("path", "customer.address"),
                                 hasEntry("message", "must not be blank")
                         ),
                         allOf(
-                                hasEntry("field", "updateCustomer.customerInput.postalCode"),
+                                hasEntry("path", "customer.postalCode"),
                                 hasEntry("message", "must not be blank")
                         ),
                         allOf(
-                                hasEntry("field", "updateCustomer.customerInput.stateProvince"),
+                                hasEntry("path", "customer.stateProvince"),
                                 hasEntry("message", "must not be null")
                         )
                 ));

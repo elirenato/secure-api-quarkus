@@ -14,7 +14,7 @@ import javax.validation.constraints.Size;
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Data
 @Entity
-@Table(name="customers")
+@Table(name = "customers")
 public class Customer {
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
@@ -59,9 +59,12 @@ public class Customer {
     private StateProvince stateProvince;
 
     public static class ListJsonView {
-        private ListJsonView() {}
+        private ListJsonView() {
+        }
     }
+
     public static class GetJsonView extends ListJsonView {
-        private GetJsonView() {}
+        private GetJsonView() {
+        }
     }
 }
