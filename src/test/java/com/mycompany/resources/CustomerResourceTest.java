@@ -1,11 +1,13 @@
 package com.mycompany.resources;
 
 import com.mycompany.common.BuilderFactory;
+import com.mycompany.config.DatabaseTestProfile;
 import com.mycompany.entities.Country;
 import com.mycompany.entities.Customer;
 import com.mycompany.entities.StateProvince;
 import com.mycompany.services.CustomerService;
 import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.junit.TestProfile;
 import io.quarkus.test.junit.mockito.InjectMock;
 import io.quarkus.test.security.TestSecurity;
 import org.hibernate.exception.ConstraintViolationException;
@@ -18,6 +20,7 @@ import java.util.Arrays;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
 
+@TestProfile(DatabaseTestProfile.class)
 @QuarkusTest
 public class CustomerResourceTest {
 
