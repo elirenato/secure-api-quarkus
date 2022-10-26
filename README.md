@@ -65,7 +65,7 @@ docker-compose -f src/main/docker/keycloak/docker-compose.yaml --env-file=src/ma
 
 To complete the setup of Keycloak, you also need to configure a Realm to test the application.
 
-[Configure a new realm](https://elibarbosa.dev/using-keycloak-to-secure-applications/#configure-realm).
+[Configure a new realm](./docs/create-new-realm-keycloak-18.pdf).
 
 Double-check the following properties of the `src/main/resource/application.properties` file. 
 The values of them must match with the values used to create the test realm.
